@@ -73,16 +73,6 @@ body {
   50%       { transform: translateY(-6px) rotate(2deg); }
 }
 
-@keyframes botExcited {
-  0%   { transform: translateX(0) rotate(0deg) scale(1); }
-  15%  { transform: translateX(-8px) rotate(-8deg) scale(1.05); }
-  30%  { transform: translateX(8px) rotate(8deg) scale(1.08); }
-  45%  { transform: translateX(-6px) rotate(-6deg) scale(1.06); }
-  60%  { transform: translateX(6px) rotate(5deg) scale(1.04); }
-  75%  { transform: translateX(-3px) rotate(-3deg) scale(1.02); }
-  100% { transform: translateX(0) rotate(0deg) scale(1); }
-}
-
 @keyframes statusPulse {
   0%, 100% { transform: scale(1); }
   50%       { transform: scale(1.4); }

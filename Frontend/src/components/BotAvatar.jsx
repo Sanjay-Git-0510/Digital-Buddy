@@ -8,13 +8,12 @@ import React from "react";
  */
 const BotAvatar = ({ size = 48, isTyping = false, isThinking = false, style = {} }) => {
   const getAnimation = () => {
-    if (isTyping)   return "botExcited 0.6s ease-in-out infinite";
-    if (isThinking) return "botIdle 1.2s ease-in-out infinite";
+    // Always use calm idle animation - no shaking when typing
     return "botIdle 3s ease-in-out infinite";
   };
 
   const getGlow = () => {
-    if (isTyping)   return "0 0 30px rgba(56,189,248,0.9), 0 0 60px rgba(14,165,233,0.5), 0 0 90px rgba(14,165,233,0.2)";
+    if (isTyping)   return "0 0 24px rgba(56,189,248,0.8), 0 0 48px rgba(14,165,233,0.4)";
     if (isThinking) return "0 0 20px rgba(14,165,233,0.6), 0 0 40px rgba(14,165,233,0.3)";
     return "0 0 12px rgba(14,165,233,0.4)";
   };
@@ -26,7 +25,7 @@ const BotAvatar = ({ size = 48, isTyping = false, isThinking = false, style = {}
   };
 
   const getStatusLabel = () => {
-    if (isTyping)   return "You're typing...";
+    if (isTyping)   return "Buddy is typing...";
     if (isThinking) return "Thinking...";
     return "Online";
   };

@@ -152,7 +152,7 @@ const Sidebar = ({ sessions, currentSessionId, onSelectSession, onNewChat, isOpe
         fontSize: 11,
         textAlign: "center",
       }}>
-        Powered by Gemini AI
+        
       </div>
     </div>
   );

@@ -42,7 +42,7 @@ const InputBar = ({ value, onChange, onSend, isLoading, isTyping }) => {
           value={value}
           onChange={onChange}
           onKeyDown={handleKeyDown}
-          placeholder="Message Nova..."
+          placeholder="Ask Anything I am Your Buddy"
           rows={1}
           style={{
             flex: 1,

@@ -7,12 +7,13 @@ import { fetchMessages, fetchSessions, sendMessage, clearSession } from "./api";
 
 // ─── Suggestion Prompts ────────────────────────────────────────────────────────
 const SUGGESTIONS = [
-  { icon: "✨", text: "Tell me a fun science fact" },
-  { icon: "🔍", text: "Explain quantum computing simply" },
-  { icon: "💡", text: "Give me a creative business idea" },
-  { icon: "🌍", text: "Say hello in 5 different languages" },
-  { icon: "🎨", text: "Describe a futuristic city" },
-  { icon: "🤔", text: "What is the meaning of life?" },
+  { icon: "⚙️", text: "Explain how a CPU works in simple terms" },
+  { icon: "📡", text: "What is the difference between HTTP and HTTPS?" },
+  { icon: "💻", text: "Give me a beginner MERN project idea" },
+  { icon: "🧠", text: "Teach me a 2-minute stress relief technique" },
+  { icon: "🌿", text: "Give me a quick breathing exercise" },
+  { icon: "📚", text: "How can I focus better while studying engineering?" },
+  { icon: "🚀", text: "Motivate me to keep improving my coding skills" },
 ];
 
 // ─── Floating Particles ────────────────────────────────────────────────────────
@@ -224,10 +225,10 @@ export default function App() {
 
             <div>
               <div style={{ color: "#f1f5f9", fontWeight: 600, fontSize: 16, letterSpacing: "-0.01em" }}>
-                Nova AI
+               Digital Buddy
               </div>
               <div style={{ color: "#475569", fontSize: 12 }}>
-                Powered by Gemini · {messages.length} message{messages.length !== 1 ? "s" : ""}
+                 {messages.length} message{messages.length !== 1 ? "s" : ""}
               </div>
             </div>
           </div>
@@ -286,54 +287,75 @@ export default function App() {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 28,
+              gap: 18,
               animation: "fadeIn 0.5s ease",
+              padding: "0 20px",
             }}>
               {/* Large animated bot */}
-              <BotAvatar size={100} isTyping={isTyping} isThinking={isLoading} />
+              <BotAvatar size={85} isTyping={isTyping} isThinking={isLoading} />
 
-              <div style={{ textAlign: "center" }}>
-                <h1 style={{ color: "#f1f5f9", fontSize: 26, fontWeight: 700, marginBottom: 8, letterSpacing: "-0.02em" }}>
-                  Hi, I'm Nova! 👋
+              <div style={{ textAlign: "center", marginBottom: 4 }}>
+                <h1 style={{ color: "#f1f5f9", fontSize: 24, fontWeight: 700, marginBottom: 6, letterSpacing: "-0.02em" }}>
+                  Hi, I'm Your Assistant! 👋
                 </h1>
-                <p style={{ color: "#475569", fontSize: 15, maxWidth: 380, lineHeight: 1.6 }}>
-                  Your intelligent AI assistant powered by Gemini. Ask me anything — I'm here to help!
+                <p style={{ color: "#64748b", fontSize: 14, maxWidth: 420, lineHeight: 1.5, margin: "0 auto" }}>
+                  Your intelligent AI assistant. Ask me anything — I'm here to help!
                 </p>
               </div>
 
-              {/* Suggestion chips */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", maxWidth: 520 }}>
-                {SUGGESTIONS.map((s) => (
+              {/* Suggestion cards in 2-column grid */}
+              <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(2, 1fr)", 
+                gap: 10, 
+                maxWidth: 640, 
+                width: "100%" 
+              }}>
+                {SUGGESTIONS.map((s, index) => (
                   <button
                     key={s.text}
                     onClick={() => handleSuggestion(s.text)}
                     style={{
-                      padding: "9px 16px",
-                      borderRadius: 20,
-                      background: "rgba(14,165,233,0.08)",
-                      border: "1px solid rgba(14,165,233,0.2)",
+                      padding: "14px 16px",
+                      borderRadius: 12,
+                      background: "rgba(14,165,233,0.05)",
+                      border: "1px solid rgba(14,165,233,0.15)",
                       color: "#7dd3fc",
                       fontSize: 13,
+                      fontWeight: 500,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
-                      gap: 7,
+                      gap: 12,
                       fontFamily: "inherit",
-                      transition: "all 0.2s ease",
+                      transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                      textAlign: "left",
+                      backdropFilter: "blur(4px)",
+                      // Center the last item if it's odd
+                      gridColumn: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "1 / -1" : "auto",
+                      maxWidth: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "50%" : "100%",
+                      marginLeft: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "auto" : "0",
+                      marginRight: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "auto" : "0",
                     }}
                     onMouseOver={(e) => {
-                      e.currentTarget.style.background = "rgba(14,165,233,0.16)";
-                      e.currentTarget.style.borderColor = "rgba(14,165,233,0.4)";
-                      e.currentTarget.style.boxShadow = "0 0 14px rgba(14,165,233,0.15)";
+                      e.currentTarget.style.background = "rgba(14,165,233,0.12)";
+                      e.currentTarget.style.borderColor = "rgba(56,189,248,0.4)";
+                      e.currentTarget.style.boxShadow = "0 4px 20px rgba(14,165,233,0.2), 0 0 0 1px rgba(56,189,248,0.1) inset";
+                      e.currentTarget.style.transform = "translateY(-2px)";
                     }}
                     onMouseOut={(e) => {
-                      e.currentTarget.style.background = "rgba(14,165,233,0.08)";
-                      e.currentTarget.style.borderColor = "rgba(14,165,233,0.2)";
+                      e.currentTarget.style.background = "rgba(14,165,233,0.05)";
+                      e.currentTarget.style.borderColor = "rgba(14,165,233,0.15)";
                       e.currentTarget.style.boxShadow = "none";
+                      e.currentTarget.style.transform = "translateY(0)";
                     }}
                   >
-                    <span>{s.icon}</span>
-                    {s.text}
+                    <span style={{ 
+                      fontSize: 20, 
+                      flexShrink: 0,
+                      filter: "brightness(1.1)",
+                    }}>{s.icon}</span>
+                    <span style={{ lineHeight: 1.4, flex: 1 }}>{s.text}</span>
                   </button>
                 ))}
               </div>
