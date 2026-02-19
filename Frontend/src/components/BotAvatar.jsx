@@ -25,7 +25,7 @@ const BotAvatar = ({ size = 48, isTyping = false, isThinking = false, style = {}
   };
 
   const getStatusLabel = () => {
-    if (isTyping)   return "Buddy is typing...";
+    if (isTyping)   return "You're typing...";
     if (isThinking) return "Thinking...";
     return "Online";
   };

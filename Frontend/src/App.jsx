@@ -27,60 +27,43 @@ const PARTICLES = Array.from({ length: 22 }, (_, i) => ({
   color: Math.random() > 0.5 ? "#0ea5e9" : "#38bdf8",
 }));
 
-// ─── Session helpers ───────────────────────────────────────────────────────────
+// ─── Session ID Generator ──────────────────────────────────────────────────────
 const createSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-
-const getStoredSessionId = () => {
-  try {
-    let id = localStorage.getItem("nova_session_id");
-    if (!id) {
-      id = createSessionId();
-      localStorage.setItem("nova_session_id", id);
-    }
-    return id;
-  } catch {
-    return createSessionId();
-  }
-};
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [sessionId, setSessionId] = useState(getStoredSessionId);
-  const [messages, setMessages]   = useState([]);
-  const [sessions, setSessions]   = useState([]);
-  const [input, setInput]         = useState("");
+  // Generate new session ID on every mount (no persistence)
+  const [sessionId] = useState(() => createSessionId());
+  const [messages, setMessages] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isTyping, setIsTyping]   = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [error, setError]         = useState(null);
+  const [error, setError] = useState(null);
 
   const messagesEndRef = useRef(null);
   const typingTimerRef = useRef(null);
 
-  // ─── Load history ────────────────────────────────────────────────────────────
-  const loadHistory = useCallback(async (sid) => {
-    try {
-      const res = await fetchMessages(sid);
-      if (res.data.success) setMessages(res.data.messages);
-    } catch {
-      // Backend not connected — start fresh
-      setMessages([]);
-    }
-  }, []);
-
-  const loadSessions = useCallback(async () => {
-    try {
-      const res = await fetchSessions();
-      if (res.data.success) setSessions(res.data.sessions);
-    } catch {
-      setSessions([]);
-    }
-  }, []);
-
+  // ─── Load history on mount (from backend only) ────────────────────────────────
   useEffect(() => {
-    loadHistory(sessionId);
-    loadSessions();
-  }, [sessionId, loadHistory, loadSessions]);
+    fetchMessages(sessionId)
+      .then((res) => {
+        if (res.data.success) setMessages(res.data.messages);
+      })
+      .catch(() => {
+        // Backend unavailable or no messages
+        setMessages([]);
+      });
+
+    fetchSessions()
+      .then((res) => {
+        if (res.data.success) setSessions(res.data.sessions);
+      })
+      .catch(() => {
+        setSessions([]);
+      });
+  }, [sessionId]);
 
   // ─── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -115,19 +98,23 @@ export default function App() {
       if (res.data.success) {
         const botMsg = { role: "assistant", content: res.data.reply, timestamp: new Date().toISOString() };
         setMessages((prev) => [...prev, botMsg]);
-        loadSessions(); // Refresh sidebar
+        
+        // Refresh sessions list
+        fetchSessions().then((res) => {
+          if (res.data.success) setSessions(res.data.sessions);
+        }).catch(() => {});
       }
     } catch (err) {
-      setError("⚠️ Could not reach the server. Make sure your backend is running on port 5000.");
+      setError("⚠️ Could not reach the server. Make sure backend is running.");
       setMessages((prev) => [...prev, {
         role: "assistant",
-        content: "Sorry, I'm having trouble connecting to the server. Please check that the backend is running.",
+        content: "Sorry, I'm having trouble connecting to the server.",
         timestamp: new Date().toISOString(),
       }]);
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, sessionId, loadSessions]);
+  }, [input, isLoading, sessionId]);
 
   // ─── Clear chat ───────────────────────────────────────────────────────────────
   const handleClear = async () => {
@@ -139,18 +126,14 @@ export default function App() {
 
   // ─── New chat ─────────────────────────────────────────────────────────────────
   const handleNewChat = () => {
-    const newId = createSessionId();
-    try { localStorage.setItem("nova_session_id", newId); } catch {}
-    setSessionId(newId);
-    setMessages([]);
-    setShowSidebar(false);
+    // Reload page to generate new session
+    window.location.reload();
   };
 
   // ─── Select session from sidebar ─────────────────────────────────────────────
   const handleSelectSession = (sid) => {
-    try { localStorage.setItem("nova_session_id", sid); } catch {}
-    setSessionId(sid);
-    setShowSidebar(false);
+    // Can't switch sessions without storage, just reload
+    window.location.reload();
   };
 
   // ─── Use suggestion prompt ────────────────────────────────────────────────────
@@ -179,7 +162,6 @@ export default function App() {
             animation: `floatParticle ${p.duration}s ease-in-out ${p.delay}s infinite`,
           }} />
         ))}
-        {/* Glow orbs */}
         <div style={{ position:"absolute", width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%)", top:-150, left:-100 }} />
         <div style={{ position:"absolute", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%)", bottom:-100, right:-80 }} />
         <div style={{ position:"absolute", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(2,132,199,0.07) 0%, transparent 70%)", top:"40%", right:"20%" }} />
@@ -208,9 +190,7 @@ export default function App() {
           backdropFilter: "blur(20px)",
           flexShrink: 0,
         }}>
-          {/* Left: menu + bot info */}
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            {/* Hamburger */}
             <button
               onClick={() => setShowSidebar((s) => !s)}
               style={{ background:"none", border:"none", cursor:"pointer", color:"#38bdf8", fontSize:20, padding:4, display:"flex", alignItems:"center" }}
@@ -220,20 +200,16 @@ export default function App() {
               </svg>
             </button>
 
-            {/* Compact bot avatar */}
             <BotAvatar size={42} isTyping={isTyping} isThinking={isLoading} />
 
             <div>
               <div style={{ color: "#f1f5f9", fontWeight: 600, fontSize: 16, letterSpacing: "-0.01em" }}>
-               Digital Buddy
+                Digital Buddy
               </div>
-              <div style={{ color: "#475569", fontSize: 12 }}>
-                 {messages.length} message{messages.length !== 1 ? "s" : ""}
-              </div>
+             
             </div>
           </div>
 
-          {/* Right: Clear button */}
           {!isEmpty && (
             <button
               onClick={handleClear}
@@ -259,7 +235,6 @@ export default function App() {
           )}
         </header>
 
-        {/* ── Error Banner ── */}
         {error && (
           <div style={{
             padding: "10px 20px",
@@ -276,10 +251,8 @@ export default function App() {
           </div>
         )}
 
-        {/* ── Messages Area ── */}
         <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px", display: "flex", flexDirection: "column" }}>
 
-          {/* Empty state */}
           {isEmpty && (
             <div style={{
               flex: 1,
@@ -291,7 +264,6 @@ export default function App() {
               animation: "fadeIn 0.5s ease",
               padding: "0 20px",
             }}>
-              {/* Large animated bot */}
               <BotAvatar size={85} isTyping={isTyping} isThinking={isLoading} />
 
               <div style={{ textAlign: "center", marginBottom: 4 }}>
@@ -301,9 +273,9 @@ export default function App() {
                 <p style={{ color: "#64748b", fontSize: 14, maxWidth: 420, lineHeight: 1.5, margin: "0 auto" }}>
                   Your intelligent AI assistant. Ask me anything — I'm here to help!
                 </p>
+              
               </div>
 
-              {/* Suggestion cards in 2-column grid */}
               <div style={{ 
                 display: "grid", 
                 gridTemplateColumns: "repeat(2, 1fr)", 
@@ -331,7 +303,6 @@ export default function App() {
                       transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                       textAlign: "left",
                       backdropFilter: "blur(4px)",
-                      // Center the last item if it's odd
                       gridColumn: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "1 / -1" : "auto",
                       maxWidth: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "50%" : "100%",
                       marginLeft: index === SUGGESTIONS.length - 1 && SUGGESTIONS.length % 2 !== 0 ? "auto" : "0",
@@ -362,12 +333,10 @@ export default function App() {
             </div>
           )}
 
-          {/* Message bubbles */}
           {messages.map((msg, i) => (
             <ChatMessage key={i} role={msg.role} content={msg.content} timestamp={msg.timestamp} />
           ))}
 
-          {/* Thinking indicator */}
           {isLoading && (
             <div style={{
               display: "flex",
@@ -408,7 +377,6 @@ export default function App() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* ── Input Bar ── */}
         <InputBar
           value={input}
           onChange={handleInputChange}
