@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import BotAvatar from "./components/BotAvatar";
 import ChatMessage from "./components/ChatMessage";
 import InputBar from "./components/InputBar";
-import Sidebar from "./components/SideBar";
-import { fetchMessages, fetchSessions, sendMessage, clearSession } from "./api";
+import { sendMessage } from "./api";
 
 // ─── Suggestion Prompts ────────────────────────────────────────────────────────
 const SUGGESTIONS = [
@@ -27,43 +26,16 @@ const PARTICLES = Array.from({ length: 22 }, (_, i) => ({
   color: Math.random() > 0.5 ? "#0ea5e9" : "#38bdf8",
 }));
 
-// ─── Session ID Generator ──────────────────────────────────────────────────────
-const createSessionId = () => `session_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
-  // Generate new session ID on every mount (no persistence)
-  const [sessionId] = useState(() => createSessionId());
   const [messages, setMessages] = useState([]);
-  const [sessions, setSessions] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
   const [error, setError] = useState(null);
 
   const messagesEndRef = useRef(null);
   const typingTimerRef = useRef(null);
-
-  // ─── Load history on mount (from backend only) ────────────────────────────────
-  useEffect(() => {
-    fetchMessages(sessionId)
-      .then((res) => {
-        if (res.data.success) setMessages(res.data.messages);
-      })
-      .catch(() => {
-        // Backend unavailable or no messages
-        setMessages([]);
-      });
-
-    fetchSessions()
-      .then((res) => {
-        if (res.data.success) setSessions(res.data.sessions);
-      })
-      .catch(() => {
-        setSessions([]);
-      });
-  }, [sessionId]);
 
   // ─── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -88,21 +60,16 @@ export default function App() {
     setInput("");
     setIsTyping(false);
 
-    // Optimistic UI
+    // Add user message to state
     const userMsg = { role: "user", content: text, timestamp: new Date().toISOString() };
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
-      const res = await sendMessage(sessionId, text);
+      const res = await sendMessage(text);
       if (res.data.success) {
         const botMsg = { role: "assistant", content: res.data.reply, timestamp: new Date().toISOString() };
         setMessages((prev) => [...prev, botMsg]);
-        
-        // Refresh sessions list
-        fetchSessions().then((res) => {
-          if (res.data.success) setSessions(res.data.sessions);
-        }).catch(() => {});
       }
     } catch (err) {
       setError("⚠️ Could not reach the server. Make sure backend is running.");
@@ -114,26 +81,11 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, sessionId]);
+  }, [input, isLoading]);
 
   // ─── Clear chat ───────────────────────────────────────────────────────────────
-  const handleClear = async () => {
-    try {
-      await clearSession(sessionId);
-    } catch {}
+  const handleClear = () => {
     setMessages([]);
-  };
-
-  // ─── New chat ─────────────────────────────────────────────────────────────────
-  const handleNewChat = () => {
-    // Reload page to generate new session
-    window.location.reload();
-  };
-
-  // ─── Select session from sidebar ─────────────────────────────────────────────
-  const handleSelectSession = (sid) => {
-    // Can't switch sessions without storage, just reload
-    window.location.reload();
   };
 
   // ─── Use suggestion prompt ────────────────────────────────────────────────────
@@ -167,15 +119,6 @@ export default function App() {
         <div style={{ position:"absolute", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(2,132,199,0.07) 0%, transparent 70%)", top:"40%", right:"20%" }} />
       </div>
 
-      {/* ── Sidebar ── */}
-      <Sidebar
-        sessions={sessions}
-        currentSessionId={sessionId}
-        onSelectSession={handleSelectSession}
-        onNewChat={handleNewChat}
-        isOpen={showSidebar}
-      />
-
       {/* ── Main Chat Area ── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", zIndex: 1, minWidth: 0 }}>
 
@@ -191,22 +134,15 @@ export default function App() {
           flexShrink: 0,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button
-              onClick={() => setShowSidebar((s) => !s)}
-              style={{ background:"none", border:"none", cursor:"pointer", color:"#38bdf8", fontSize:20, padding:4, display:"flex", alignItems:"center" }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M3 6h18M3 12h18M3 18h18" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-
             <BotAvatar size={42} isTyping={isTyping} isThinking={isLoading} />
 
             <div>
               <div style={{ color: "#f1f5f9", fontWeight: 600, fontSize: 16, letterSpacing: "-0.01em" }}>
                 Digital Buddy
               </div>
-             
+              <div style={{ color: "#475569", fontSize: 12 }}>
+                {messages.length} message{messages.length !== 1 ? "s" : ""}
+              </div>
             </div>
           </div>
 
@@ -273,7 +209,6 @@ export default function App() {
                 <p style={{ color: "#64748b", fontSize: 14, maxWidth: 420, lineHeight: 1.5, margin: "0 auto" }}>
                   Your intelligent AI assistant. Ask me anything — I'm here to help!
                 </p>
-              
               </div>
 
               <div style={{ 
