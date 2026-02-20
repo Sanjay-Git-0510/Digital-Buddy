@@ -140,9 +140,7 @@ export default function App() {
               <div style={{ color: "#f1f5f9", fontWeight: 600, fontSize: 16, letterSpacing: "-0.01em" }}>
                 Digital Buddy
               </div>
-              <div style={{ color: "#475569", fontSize: 12 }}>
-                {messages.length} message{messages.length !== 1 ? "s" : ""}
-              </div>
+              
             </div>
           </div>
 
